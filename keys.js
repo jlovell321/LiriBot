@@ -1,13 +1,18 @@
-// console.log('this is loaded');
+var keys = require("dotenv").config();
+var Twitter = require('twitter');
+var Spotify = require('node-spotify-api');
 
-exports.twitterKeys = {
-  consumer_key: 'uawcTVndT1P6E4H38FX8dycmx',
-  consumer_secret: '	kZeMROfEvXhBIvUYPhVqwXbNoM2ajzEJCKMyxtuA1wremJJwJb',
-  access_token_key: '	31581566-qo6Q1XRzxkp3y1EzTqP2sEKmybwWDT64JJpY1sS6X',
-  access_token_secret: '	GlVabkimKt4TfgvWF7B3mzMs7uGm5wUfkJrz6xBZN3fEW',
-}
+console.log('this is loaded');
 
-exports.spotifyKeys = {
-	id: '0018a3600f204543af5136fe299bb311',
-	secret: '70cd2a713e54476d9414861796a44ffb',
-}
+
+exports.twitter = {
+  consumer_key: process.env.TWITTER_CONSUMER_KEY,
+  consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+  access_token_key: process.env.TWITTER_ACCESS_TOKEN_KEY,
+  access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
+};
+
+exports.spotify = {
+  id: process.env.SPOTIFY_ID,
+  secret: process.env.SPOTIFY_SECRET
+};
