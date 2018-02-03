@@ -1,114 +1,134 @@
-var keys = require("dotenv").config();
+var keys = require('./keys.js');
+
+var Twitter = require('twitter');
+
+var Spotify = require('node-spotify-api');
 
 var request = require('request');
-var Twitter = require('twitter');
-var Spotify = require('node-spotify-api');
-var fs = require('fs');
-var client = new Twitter(keys.twitterKeys);
-var input = process.argv;
-var action = input[2];
-var inputs = input[3];
 
-switch (action) {
-	case "my-tweets":
-	twitter(inputs);
-	break;
+var fs = require("fs");
 
-	case "spotify-this-song":
-	spotify(inputs);
-	break;
 
-	case "movie-this":
-	movie(inputs);
-	break;
+var command = process.argv[2];
 
-	case "do-what-it-says":
-	doit();
-	break;
-};
+var commandParameter = process.argv[3];
 
-function twitter(inputs) {
-	var params = {screen_name: inputs, count: 20};
-	
-		client.get('statuses/user_timeline', params, function(error, tweets, response) {
-			if (!error) {
-				for (i = 0; i < tweets.length; i ++){
-					console.log("Tweet: " + "'" + tweets[i].text + "'" + " Created At: " + tweets[i].created_at);
-				}
-			} else {
-				console.log(error);
-			}
-		});
-
+if(command === 'my-tweets'){
+	showMyTweets();
 }
 
-function spotify(inputs) {
+if(command === 'spotify-this-song'){
+	spotifySong(commandParameter);
+}
 
-	var spotify = new Spotify(keys.spotifyKeys);
-		if (!inputs){
-        	inputs = 'The Sign';
-    	}
-		spotify.search({ type: 'track', query: inputs }, function(err, data) {
-			if (err){
-	            console.log('Error occurred: ' + err);
-	            return;
-	        }
+if(command === 'movie-this'){
+	movieThis(commandParameter);
+}
 
-	        var songInfo = data.tracks.items;
-	        console.log("Artist(s): " + songInfo[0].artists[0].name);
-	        console.log("Song Name: " + songInfo[0].name);
-	        console.log("Preview Link: " + songInfo[0].preview_url);
-	        console.log("Album: " + songInfo[0].album.name);
+if(command === 'do-what-it-says'){
+	randomCommand();
+}
+
+function showMyTweets () {
+var client = new Twitter(keys.twitterKeys);
+
+var params = {screen_name: 'MaryMorganChas'};
+
+client.get('statuses/user_timeline', params, function(error, tweets, response) {
+
+	if (!error) {
+	    for(var i = 0; i < Math.min(tweets.length, 20); i++){
+			var tweet = tweets[i];
+
+			console.log(tweet.text);
+			console.log("Created on: " + tweet.created_at);
+			console.log("-----------------------------");
+		}
+	} else {
+		console.log(error);
+	}
+	});
+}
+
+function spotifySong (commandParameter = 'The Sign') {
+
+//var client = new Spotify(keys.spotifyKeys);
+ 
+var spotify = new Spotify(keys.spotifyKeys);
+ 
+spotify.search({ type: 'track', query: commandParameter }, function(err, data) {
+		  if (err) {
+		    return console.log('Error occurred: ' + err);
+		  }
+
+ 		//console.log(data);
+ 		for(var i = 0; i < data.tracks.items.length; i++){
+ 			var item = data.tracks.items[i];
+ 			console.log("Song name: " + item.name);
+
+ 			console.log("Album name: " + item.album.name);
+
+ 			console.log("Preview Url: " + item.preview_url);
+
+ 			var artistsNames = [];
+ 			for(var j = 0; j < item.artists.length; j++) {
+ 				var artistsName = item.artists[j].name;
+ 				artistsNames[j] = artistsName;
+ 			}
+
+ 			console.log("Artists Name: " + artistsNames);
+ 			console.log("--------------------------")
+ 			
+ 		}
 	});
 }
 
 
-function movie(inputs) {
+function movieThis(commandParameter = 'Mr. Nobody') {
 
-	var queryUrl = "http://www.omdbapi.com/?t=" + inputs + "&y=&plot=short&apikey=40e9cece";
+	request("http://www.omdbapi.com/?t="+commandParameter+"&y=&plot=short&apikey=40e9cece", function(error, response, body) {
+			body = JSON.parse(body);
+			//console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received 
+ 			console.log("Movie Title: " + body.Title);
+ 			console.log("Year movie came out: " + body.Year);
+ 			if(body.Ratings) {
+	 			for (var i = 0; i < Math.min(body.Ratings.length, 2); i++) {
+	 				console.log("Movie ratings: " + body.Ratings[i].Source + " gave " + body.Ratings[i].Value)
+	 			}
+ 			}
+ 			console.log("The country the movie was filmed in: " + body.Country);
+ 			console.log("Plot of the movie: " + body.Plot);
+ 			console.log("Actors in the movie: " + body.Actors);
+ 			console.log("--------------------------");
+	});
+	
+}
+function randomCommand() {
+	var lineReader = require('readline').createInterface({
+	  input: require('fs').createReadStream('random.txt')
+	});
 
-	request(queryUrl, function(error, response, body) {
-		if (!inputs){
-        	inputs = 'Mr Nobody';
-    	}
-		if (!error && response.statusCode === 200) {
+	lineReader.on('line', function (line) {
+		var tokens = line.split(",");
+		var command = tokens[0];
+		var commandParameter = tokens[1];
+		
+		if(command === 'my-tweets'){
+			showMyTweets();
+		}
 
-		    console.log("Title: " + JSON.parse(body).Title);
-		    console.log("Release Year: " + JSON.parse(body).Year);
-		    console.log("IMDB Rating: " + JSON.parse(body).imdbRating);
-		    console.log("Rotten Tomatoes Rating: " + JSON.parse(body).Ratings[1].Value);
-		    console.log("Country: " + JSON.parse(body).Country);
-		    console.log("Language: " + JSON.parse(body).Language);
-		    console.log("Plot: " + JSON.parse(body).Plot);
-		    console.log("Actors: " + JSON.parse(body).Actors);
+		if(command === 'spotify-this-song'){
+			spotifySong(commandParameter);
+		}
+
+		if(command === 'movie-this'){
+			movieThis(commandParameter);
+		}
+
+		if(command === 'do-what-it-says'){
+			//ignore to avoid loop
 		}
 	});
-};
 
-function doit() {
-	fs.readFile('random.txt', "utf8", function(error, data){
-
-		if (error) {
-    		return console.log(error);
-  		}
-
-		// Then split it by commas (to make it more readable)
-		var dataArr = data.split(",");
-
-		// Each command is represented. Because of the format in the txt file, remove the quotes to run these commands. 
-		if (dataArr[0] === "spotify-this-song") {
-			var songcheck = dataArr[1].slice(1, -1);
-			spotify(songcheck);
-		} else if (dataArr[0] === "my-tweets") {
-			var tweetname = dataArr[1].slice(1, -1);
-			twitter(tweetname);
-		} else if(dataArr[0] === "movie-this") {
-			var movie_name = dataArr[1].slice(1, -1);
-			movie(movie_name);
-		} 
-		
-  	});
-
-};
 
 

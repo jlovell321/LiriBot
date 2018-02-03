@@ -1,6 +1,4 @@
-var keys = require("dotenv").config();
-var Twitter = require('twitter');
-var Spotify = require('node-spotify-api');
+
 
 console.log('this is loaded');
 
